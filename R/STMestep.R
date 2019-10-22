@@ -30,6 +30,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     sigma.ss <- n_mat_sum(diag(0, nrow=(K-1)))
   } else {
     sigma.ss <- diag(0, nrow=(K-1))
+    sigma.ssTest <- diag(0, nrow=(K-1))
   }
   if(order_beta) {
     beta.ss <- vector(mode="list", length=A)
@@ -38,12 +39,16 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     }
   } else {
     beta.ss <- vector(mode="list", length=A)
+    beta.ssTest <- vector(mode="list", length=A)
     for(i in 1:A) {
       beta.ss[[i]] <- matrix(0, nrow=K,ncol=V)
+      beta.ssTest[[i]] <- matrix(0, nrow=K,ncol=V)
     }
   }
   bound <- vector(length=N)
   lambda <- vector("list", length=N)
+  betaTest <- vector("list", length=N)
+  sigmaTest <- vector("list", length=N)
   
   # 2) Precalculate common components
   sigobj <- try(chol.default(sigma), silent=TRUE)
@@ -81,6 +86,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       sigma.ss <- n_mat_sum(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu)
     } else {
       sigma.ss <- sigma.ss + doc.results$eta$nu
+      sigmaTest[[i]] <- doc.results$eta$nu
     }
     if(order_beta) {
       #more efficient than this would be to stack all the C's underneath
@@ -92,15 +98,34 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       beta.ss[[aspect]][[2]][,words] <- o_beta[[2]]
     } else {
       beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
+      betaTest[[i]] <- doc.results$phis
     }
     bound[i] <- doc.results$bound
     lambda[[i]] <- c(doc.results$eta$lambda)
     if(verbose && i%%ctevery==0) cat(".")
   }
+  
+  for (i in 1:N) {
+    doc <- documents[[i]]
+    words <- doc[1,]
+    aspect <- beta.index[i]
+    sigma.ssTest <- sigma.ssTest + sigmaTest[[i]]
+    beta.ssTest[[aspect]][,words] <- betaTest[[i]] + beta.ssTest[[aspect]][,words]
+  }
+  if(!isTRUE(all.equal(sigma.ss, sigma.ssTest)))
+  {
+    msg <- sprintf("SIGMA SUM Failed: %s \n", all.equal(sigma.ss, sigma.ssTest))
+    if(verbose) cat(msg)
+  }
+  if(!isTRUE(all.equal(beta.ss, beta.ssTest)))
+  {
+    msg <- sprintf("MU SUM Failed: %s \n",all.equal(beta.ss, beta.ssTest))
+    if(verbose) cat(msg)
+  }
   if(verbose) cat("\n") #add a line break for the next message.
   
   #4) Combine and Return Sufficient Statistics
   lambda <- do.call(rbind, lambda)
-  return(list(sigma=sigma.ss, beta=beta.ss, bound=bound, lambda=lambda,
+  return(list(sigma=sigma.ssTest, beta=beta.ssTest, bound=bound, lambda=lambda,
               vec=vec))
 }

@@ -165,6 +165,57 @@ stm.control <- function(documents, vocab, settings, model=NULL) {
         beta.ss <- lapply(beta.ss, function(x) x[[1]]+x[[2]])
       }
       beta <- opt.beta(beta.ss, beta$kappa, settings)
+      
+      itnum <- convergence$its
+      
+      muTestFile <- paste0('muTest',itnum, ".rdata")
+      if(!file.exists(muTestFile))
+      {
+        muTest <- mu
+        save(muTest,file=muTestFile)  
+      }
+      else
+      {
+        load(file=muTestFile)  
+        if(!isTRUE(all.equal(mu, muTest)))
+        {
+          msg <- sprintf("MU Equality Failed %d iternation: %s \n", itnum,all.equal(mu, muTest))
+          if(verbose) cat(msg)
+        }
+      }
+      
+      betaTestFile <- paste0('betaTest',itnum, ".rdata")
+      if(!file.exists(betaTestFile))
+      {
+        betaTest <- beta
+        save(betaTest,file=betaTestFile)  
+      }
+      else
+      {
+        load(file=betaTestFile)  
+        if(!isTRUE(all.equal(beta, betaTest)))
+        {
+          msg <- sprintf("BETA Equality Failed %d iternation. %s \n", itnum, all.equal(beta, betaTest))
+          if(verbose) cat(msg)
+        }
+      }
+      
+      sigmaTestFile <- paste0('sigmaTest',itnum, ".rdata")
+      if(!file.exists(sigmaTestFile))
+      {
+        sigmaTest <- sigma
+        save(sigmaTest,file=sigmaTestFile)  
+      }
+      else
+      {
+        load(file=sigmaTestFile)  
+        if(!isTRUE(all.equal(sigma, sigmaTest)))
+        {
+          msg <- sprintf("SIGMA Equality Failed %d iternation. %s \n", itnum, all.equal(sigma, sigmaTest))
+          if(verbose) cat(msg)
+        }
+      }
+
       if(verbose) {
         timer <- floor((proc.time()-t1)[3])
         msg <- ifelse(timer>1,
