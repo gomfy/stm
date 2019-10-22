@@ -54,6 +54,16 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     sigmaentropy <- sum(log(diag(sigobj)))
     siginv <- chol2inv(sigobj)
   }
+  
+  # print out the information about the inverse matrix of sigma for judging non-convex or not
+  eigresult <- eigen(siginv)
+  siginvdig <- rep(0, K-1)
+  for (i in 1:K-1) {
+    siginvdig[i] <- siginv[i,i]
+  } 
+  sigmax <- max(siginvdig)
+  cat("K-1 eigenvalue = ", eigresult$values[K-1], "maximum diagonal element = ", sigmax, "ratio = ", (eigresult$values[K-1])**2/sigmax)
+  
   # 3) Document Scheduling
   # For right now we are just doing everything in serial.
   # the challenge with multicore is efficient scheduling while
