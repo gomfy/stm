@@ -1,3 +1,4 @@
+#
 #E-Step for a Document Block
 #[a relatively straightforward rewrite of previous
 # code with a focus on avoiding unnecessary computation.]
@@ -14,6 +15,7 @@
 # Then the sufficient statistics are returned.
 
 #Let's start by assuming its one beta and we may have arbitrarily subset the number of docs.
+#' @importFrom PreciseSums fsum
 estep <- function(documents, beta.index, update.mu, #null allows for intercept only model  
                        beta, lambda.old, mu, sigma, 
                        order_sigma, order_beta, randomize,
@@ -63,6 +65,12 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
   } else {
     vec <- 1:N
   }
+  
+  # We need to keep track of all components of the summations. Probably can find 
+  # an online algorithm somewhere but this is what for now.
+  betas = array(rep(0, N*prod(dim(beta.ss[[1]]))), c(dim(beta.ss[[1]]), N))
+  sigmas = array(rep(0, N*prod(dim(sigma.ss))), c(dim(sigma.ss), N))
+  
   for(i in vec) {
     #update components
     doc <- documents[[i]]
@@ -80,7 +88,8 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     if(order_sigma) {
       sigma.ss <- n_mat_sum(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu)
     } else {
-      sigma.ss <- sigma.ss + doc.results$eta$nu
+      #sigma.ss <- sigma.ss + doc.results$eta$nu
+      sigmas[1:dim(sigma.ss)[1], 1:dim(sigma.ss)[2], i] <- doc.results$eta$nu
     }
     if(order_beta) {
       #more efficient than this would be to stack all the C's underneath
@@ -91,13 +100,28 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       beta.ss[[aspect]][[1]][,words] <- o_beta[[1]]
       beta.ss[[aspect]][[2]][,words] <- o_beta[[2]]
     } else {
-      beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
+      #beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
+      betas[1:dim(betas)[1], words, i] <- doc.results$phis
     }
     bound[i] <- doc.results$bound
     lambda[[i]] <- c(doc.results$eta$lambda)
     if(verbose && i%%ctevery==0) cat(".")
   }
   if(verbose) cat("\n") #add a line break for the next message.
+  
+  sigma_exact = matrix(0, dim(sigma.ss)[1], dim(sigma.ss)[2])
+  for(i in 1:dim(sigma.ss)[1])
+    for(j in 1:dim(sigma.ss)[2])
+      sigma_exact[i,j] = PreciseSums::fsum(sigmas[i, j, vec])
+  
+  beta_exact = matrix(0, dim(beta.ss[[aspect]])[1], dim(beta.ss[[aspect]])[2])
+  for(i in 1:dim(beta_exact)[1])
+    for(j in 1:dim(beta_exact)[2])
+      beta_exact[i,j] = PreciseSums::fsum(betas[i, j, vec])
+  
+  sigma.ss <- sigma_exact
+  beta.ss[[aspect]] <- beta_exact
+  
   
   #4) Combine and Return Sufficient Statistics
   lambda <- do.call(rbind, lambda)

@@ -1,6 +1,6 @@
 library(stm)
 
-K = 5
+K = 8
 
 deter <- stm(poliblog5k.docs, poliblog5k.voc, K=K, #prevalence=~rating, 
              data=poliblog5k.meta, max.em.its = 100)
