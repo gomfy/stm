@@ -62,7 +62,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     siginvdig[i] <- siginv[i,i]
   } 
   sigmax <- max(siginvdig)
-  cat("K-1 eigenvalue = ", eigresult$values[K-1], "maximum diagonal element = ", sigmax, "ratio = ", (eigresult$values[K-1])**2/sigmax)
+  cat("K-1 eigenvalue = ", eigresult$values[K-1], "maximum diagonal element = ", sigmax, "ratio = ", (eigresult$values[K-1])**2/sigmax, "\n")
   
   # 3) Document Scheduling
   # For right now we are just doing everything in serial.
