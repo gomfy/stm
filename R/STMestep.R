@@ -112,16 +112,15 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
   sigma_exact = matrix(0, dim(sigma.ss)[1], dim(sigma.ss)[2])
   for(i in 1:dim(sigma.ss)[1])
     for(j in 1:dim(sigma.ss)[2])
-      sigma_exact[i,j] = PreciseSums::fsum(sigmas[i, j, vec])
+      sigma_exact[i,j] = PreciseSums::neumaierSum(sigmas[i, j, vec])
   
   beta_exact = matrix(0, dim(beta.ss[[aspect]])[1], dim(beta.ss[[aspect]])[2])
   for(i in 1:dim(beta_exact)[1])
     for(j in 1:dim(beta_exact)[2])
-      beta_exact[i,j] = PreciseSums::fsum(betas[i, j, vec])
+      beta_exact[i,j] = PreciseSums::neumaierSum(betas[i, j, vec])
   
   sigma.ss <- sigma_exact
   beta.ss[[aspect]] <- beta_exact
-  
   
   #4) Combine and Return Sufficient Statistics
   lambda <- do.call(rbind, lambda)
