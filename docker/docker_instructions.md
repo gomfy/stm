@@ -62,22 +62,14 @@ save(mod, file = fname)
 #### Building a custom image
 - Using the above `Dockerfile` you can customize the image you build by modifying the `docker_install.R` script and the `docker_run.R` script. The former controls what R packages will be included in the container, the latter what the default run script should be.
 - Note it is possible to install additional R packages in a live image but the changes may not be saved unless you do some extra steps.
-- To build the container execute the command:
-
-```
-$ docker build -t <your-name>/<your-container-name> <PATH>
-```
-
-- Where you replace `<your-name>` with your [dockerhub](https://hub.docker.com/) username and `<your-container-name>` with a desired name for your container, and `<PATH>` with the path to the directory containing the `docker_install.R` and `docker_run.R` scripts.
-
+- To build the container execute the command: `docker build -t <your-name>/<your-container-name> <PATH>`
+- Where you replace `<your-name>` with your [dockerhub](https://hub.docker.com/) username and `<your-container-name>` with a desired name for your container, and `<PATH>` with the path to the directory containing the `Dockerfile` and any files that you copy or add into the container in our case the `docker_install.R` and `docker_run.R` scripts.
 - Further instructions on the `docker build` command can be found on [the docker website](https://docs.docker.com/engine/reference/commandline/build/).
 
 #### Running an image
 - Once you have an image there is many ways you can use it. The most important ways for this project would be the following:
     - **Default** run: `docker run --rm <your-name>/<your-container-name>`, which will run the default run, which is the last `[CMD]` statement in the `Dockerfile` in the above case it would be: `Rscript /run/run.R`
-    - **With arguments**:  `docker run --rm <your-name>/<your-container-name> ARG1 ARG2 ...` For example, you could do: `Rscript /path/to/<my-other-run-script.R>` as `ARG1` and `ARG2`. `<my-other-run-script.R>` needs to be accessible from within the container.
-    - **Interactive mode**:
-
-
-
-    - **Mounting volumes mode**:
+    - **With arguments**:  `docker run --rm <your-name>/<your-container-name> ARG1 ARG2 ...` For example, you could do: `Rscript` as `ARG1` and `/path/to/<my-other-run-script.R>` as `ARG2`, where `/path/to/<my-other-run-script.R>` needs to be a path within the container.
+    - **Interactive mode**: `docker run --rm -it <your-name>/<your-container-name> /bin     /bash` This will put you inside the container where you can execute bash commands within the container.
+    - **Mounting volumes mode**: `docker run --rm -v <host directory path>:<container directory path>  ARG1 ARG2 ...` This will allow you to mount a folder from the host path into the container's directory path. You can use this option if for example you would like to provide an input for the scripts in your container that's accessible from the host machine but is not part of the container. In that case, `<host directory paht>` is the path to the directory that contains the input and `<container directory path>` is the path within the container. **Important** make sure the directory in the container is an empty directory because everything will be overwritten with the host directory's content.
+- Further instructions on the `docker run` command can be found on [the docker website](https://docs.docker.com/engine/reference/run/).

@@ -18,6 +18,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
                        beta, lambda.old, mu, sigma, 
                        order_sigma, order_beta, randomize, method,
                        verbose) {
+  
   #quickly define useful constants
   V <- ncol(beta[[1]])
   K <- nrow(beta[[1]])

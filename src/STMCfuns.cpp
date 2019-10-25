@@ -2,6 +2,7 @@
 
 #include "RcppArmadillo.h"
 
+// [[Rcpp::plugins("cpp11")]]
 // [[Rcpp::depends(RcppArmadillo)]]
 
 // [[Rcpp::export]]
@@ -193,3 +194,78 @@ SEXP hpbcpp(SEXP eta,
         Rcpp::Named("bound") = bound
         );
 }
+
+
+// [[Rcpp::export]]
+SEXP estepcpp( SEXP docs_, 
+            SEXP beta_idx_, 
+            SEXP update_mu_, // null allows for intercept only model  
+            SEXP beta_, 
+            SEXP lambda_old_, 
+            SEXP mu_, 
+            SEXP sigma_,  
+            SEXP method_,
+            SEXP verbose_) {
+   
+   // According to this: https://thecoatlessprofessor.com/programming/cpp/unofficial-rcpp-api-documentation/#vmld
+   // the code below should not do any deep copies of memory since the types are respected i.e. IntegerMatrix 
+   // constructor actually gets an integer matrix passed to it.
+   Rcpp::List docs(docs_);
+   std::map<std::size_t, arma::imat> ar_docs;
+   std::size_t ctr=0;
+   for(auto&& le : docs) {
+      Rcpp::IntegerMatrix temp((SEXP)le);
+      ar_docs[ctr] = arma::imat(temp.begin(), temp.nrow(), temp.ncol(), false);
+//      std::cout<<ar_docs[ctr]<<std::endl;
+      ++ctr;
+   }
+   
+   // No deep copies
+   Rcpp::NumericVector beta_idx(beta_idx_);
+   arma::vec ar_beta_idx(beta_idx.begin(), beta_idx.size(), false); // creates col vec 
+   
+   // No deep copies (no arma needed)
+   Rcpp::LogicalVector update_mu(update_mu_);
+   
+   // No deep copies
+   Rcpp::List beta(beta_);
+   std::map<std::size_t, arma::mat> ar_beta;
+   ctr=0;
+   for(auto&& le : beta) {
+      Rcpp::NumericMatrix temp((SEXP)le);
+      ar_beta[ctr] = arma::mat(temp.begin(), temp.nrow(), temp.ncol(), false);
+//      std::cout<<ar_beta[ctr]<<std::endl;
+      ++ctr;
+   }
+   
+   // No deep copies
+   Rcpp::NumericMatrix lambda_old(lambda_old_);
+   arma::mat ar_lambda_old(lambda_old.begin(), lambda_old.nrow(), lambda_old.ncol(), false);
+   
+   // No deep copies
+   Rcpp::NumericVector mu(mu_);
+   arma::vec ar_mu(mu.begin(), mu.size(), false); // creates col vec
+   
+   // No deep copies
+   Rcpp::NumericMatrix sigma(sigma_);
+   arma::mat ar_sigma(sigma.begin(), sigma.nrow(), sigma.ncol(), false); 
+   
+   // No deep copies (no arma needed)
+   Rcpp::CharacterVector method(method_);
+   Rcpp::LogicalVector verbose(verbose_);
+   
+   std::cout<<"Number of documents.length(): "<<docs.length()<<std::endl;
+   std::cout<<"Number of beta indices: "<<beta_idx.length()<<std::endl;
+   std::cout<<"Update mu: "<<update_mu<<std::endl;
+   std::cout<<"Number of beta elements "<<beta.length()<<std::endl;
+   std::cout<<"Number of old lambda elements "<<lambda_old.length()<<std::endl;
+   std::cout<<"Number of elements of mu "<<mu.length()<<std::endl;
+   std::cout<<"Number of elements of sigma "<<sigma.length()<<std::endl;
+   std::cout<<"What method: "<<method<<std::endl;
+   std::cout<<"Verbose: "<<verbose<<std::endl;
+   
+
+
+}
+
+

@@ -13,3 +13,7 @@ hpbcpp <- function(eta, beta, doc_ct, mu, siginv, sigmaentropy) {
     .Call(`_stm_hpbcpp`, eta, beta, doc_ct, mu, siginv, sigmaentropy)
 }
 
+estepcpp <- function(docs_, beta_idx_, update_mu_, beta_, lambda_old_, mu_, sigma_, method_, verbose_) {
+    .Call(`_stm_estepcpp`, docs_, beta_idx_, update_mu_, beta_, lambda_old_, mu_, sigma_, method_, verbose_)
+}
+
