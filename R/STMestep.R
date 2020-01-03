@@ -24,7 +24,8 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
   K <- nrow(beta[[1]])
   N <- length(documents)
   A <- length(beta)
-  ctevery <- ifelse(N>100, floor(N/100), 1)
+  # cat(paste("V:", V, "K:", K, "N:", N, "A:", A, "\n")) #MGY
+  ctevery <- ifelse(N>100, floor(N/100), 1) 
   if(!update.mu) mu.i <- as.numeric(mu)
   # 1) Initialize Sufficient Statistics 
   if(order_sigma) {

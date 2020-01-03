@@ -1,6 +1,9 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 #include "RcppArmadillo.h"
+extern "C" {
+   #include "cg_user.h"
+}
 
 // [[Rcpp::plugins("cpp11")]]
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -196,6 +199,101 @@ SEXP hpbcpp(SEXP eta,
 }
 
 
+double objlhood(double* eta,
+                long int K,
+                long int V,
+                double* beta,
+                double* doc_ct,
+                double* mu,
+                double* siginv){
+   
+   arma::vec etas(eta, K, false, false);
+   arma::mat betas(beta, V, K, false, false);
+   arma::vec doc_cts(doc_ct, V, false, false);
+   arma::vec mus(mu, K, false, false);
+   arma::mat siginvs(siginv, K, K, false, false);
+   
+   arma::rowvec expeta(etas.size()+1); 
+   expeta.fill(1); 
+   for(std::size_t j=0; j <K;  j++){
+      expeta(j) = exp(etas(j));
+   }
+   
+   arma::vec diff = etas - mus;
+   double ndoc = sum(doc_cts);
+   double part1 = arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(sum(expeta)));
+   double part2 = .5*arma::as_scalar(diff.t()*siginvs*diff);
+   double out = part2 - part1;
+   return out;
+}
+
+
+void gradlhood(double* eta,
+               double* grad,
+               long int K,
+               long int V,
+               double* beta,
+               double* doc_ct,
+               double* mu,
+               double* siginv){
+   
+   arma::vec etas(eta, K, false, false);
+   arma::mat betas(beta, V, K, false, false);
+   arma::vec doc_cts(doc_ct, V, false, false);
+   arma::vec mus(mu, K, false, false);
+   arma::mat siginvs(siginv, K, K, false, false);
+   arma::vec agrad(K);
+   
+   arma::colvec expeta(etas.size()+1); 
+   expeta.fill(1);
+   for(int j=0; j<K;  ++j)
+      expeta(j) = exp(etas(j));
+   
+   betas.each_col() %= expeta;
+   arma::vec part1 = betas*(doc_cts/arma::trans(sum(betas,0))) - (sum(doc_cts)/sum(expeta))*expeta;
+   arma::vec part2 = siginvs*(etas - mus);
+   part1.shed_row(K);
+   agrad = part2-part1;
+   grad = agrad.memptr();
+}
+
+
+double objgradlhood(double* eta,
+                    double* grad,
+                    long int K,
+                    long int V,
+                    double* beta,
+                    double* doc_ct,
+                    double* mu,
+                    double* siginv) {
+   
+   arma::vec etas(eta, K, false, false);
+   arma::mat betas(beta, V, K, false, false);
+   arma::vec doc_cts(doc_ct, V, false, false);
+   arma::vec mus(mu, K, false, false);
+   arma::mat siginvs(siginv, K, K, false, false);
+   arma::vec agrad(K);
+   
+   arma::colvec expeta(etas.size()+1); 
+   expeta.fill(1);
+   for(int j=0; j<K;  ++j)
+      expeta(j) = exp(etas(j));
+
+   arma::vec diff = etas - mus;
+   arma::vec sd = siginvs*diff;
+   double se = sum(expeta);
+   double ndoc = sum(doc_cts);
+   double objval = 0.5*arma::as_scalar(diff.t()*sd) - arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(se));
+   
+   betas.each_col() %= expeta;
+   arma::vec rt = betas*(doc_cts/arma::trans(sum(betas,0))) - (ndoc/se)*expeta;
+   rt.shed_row(K);
+   agrad = sd - rt;
+   grad = agrad.memptr();
+   return objval;
+}
+
+
 // [[Rcpp::export]]
 SEXP estepcpp( SEXP docs_, 
             SEXP beta_idx_, 
@@ -209,7 +307,7 @@ SEXP estepcpp( SEXP docs_,
    
    // According to this: https://thecoatlessprofessor.com/programming/cpp/unofficial-rcpp-api-documentation/#vmld
    // the code below should not do any deep copies of memory since the types are respected i.e. IntegerMatrix 
-   // constructor actually gets an integer matrix passed to it.
+   // constructor actually gets an integer matrix passed to it etc.
    Rcpp::List docs(docs_);
    std::map<std::size_t, arma::imat> ar_docs;
    std::size_t ctr=0;
@@ -249,11 +347,19 @@ SEXP estepcpp( SEXP docs_,
    // No deep copies
    Rcpp::NumericMatrix sigma(sigma_);
    arma::mat ar_sigma(sigma.begin(), sigma.nrow(), sigma.ncol(), false); 
+   arma::mat ar_sigmainv = arma::zeros<arma::mat>(ar_sigma.n_rows, ar_sigma.n_cols);
    
    // No deep copies (no arma needed)
    Rcpp::CharacterVector method(method_);
    Rcpp::LogicalVector verbose(verbose_);
    
+   // Set up variables needed during estep comp
+   std::size_t V = ar_beta[0].n_cols;
+   std::size_t K = ar_beta[0].n_rows;
+   std::size_t N = docs.length();
+   std::size_t A = beta.length();
+   
+   // Print some debug info
    std::cout<<"Number of documents.length(): "<<docs.length()<<std::endl;
    std::cout<<"Number of beta indices: "<<beta_idx.length()<<std::endl;
    std::cout<<"Update mu: "<<update_mu<<std::endl;
@@ -263,7 +369,39 @@ SEXP estepcpp( SEXP docs_,
    std::cout<<"Number of elements of sigma "<<sigma.length()<<std::endl;
    std::cout<<"What method: "<<method<<std::endl;
    std::cout<<"Verbose: "<<verbose<<std::endl;
+   std::cout<<"V: "<<V<<" K: "<<K<<" N: "<<N<<" A: "<<A<<std::endl;
    
+   arma::vec ar_zero_vec = arma::zeros<arma::vec>(K-1);
+   arma::mat ar_sigma_ss = diagmat(ar_zero_vec);
+   
+   std::map<std::size_t, arma::mat> ar_beta_ss;
+   for(std::size_t i=0; i<A; ++i)
+      ar_beta_ss[i] = arma::zeros<arma::mat>(K,V);
+   
+   arma::vec ar_bound = arma::zeros<arma::vec>(N);
+   arma::mat ar_lambda_new = arma::zeros<arma::mat>(ar_lambda_old.n_rows, ar_lambda_old.n_cols);
+   
+   // Compute sigma inverse
+   bool worked = arma::chol(ar_sigmainv, ar_sigma);
+   if(!worked) {
+      // Make matrix positive definite by diagonal dominance
+      arma::vec dvec = ar_sigma.diag();
+      //find the magnitude of the diagonal 
+      arma::vec magnitudes = sum(abs(ar_sigma), 1) - abs(dvec);
+      //iterate over each row and set the minimum value of the diagonal to be the magnitude of the other terms
+      int Km1 = dvec.size();
+      for(int j=0; j < Km1;  j++){
+         if(arma::as_scalar(dvec(j)) < arma::as_scalar(magnitudes(j))) dvec(j) = magnitudes(j); //enforce diagonal dominance 
+      }
+      //overwrite the diagonal of the hessian with our new object
+      ar_sigma.diag() = dvec;
+      //that was sufficient to ensure positive definiteness so we now do cholesky
+      ar_sigmainv = arma::chol(ar_sigma);
+   }
+   
+   for(std::size_t i=0; i<N; ++i) {
+      cg_descent(ar_lambda_old.colptr(i), K-1, NULL, NULL, 1.e-8, objlhood, gradlhood, objgradlhood, NULL);
+   }
 
 
 }
