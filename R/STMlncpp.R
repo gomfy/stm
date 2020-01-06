@@ -14,7 +14,7 @@ logisticnormalcpp <- function(eta, mu, siginv, beta, doc, sigmaentropy,
   Ndoc <- sum(doc.ct)
   #even at K=100, BFGS is faster than L-BFGS
   optim.out <- optimr::optimr(par=eta, fn=lhoodcpp, gr=gradcpp,
-                     method="Rcgmin", control=control,
+                     method=method, control=control,
                      doc_ct=doc.ct, mu=mu,
                      siginv=siginv, beta=beta)
   

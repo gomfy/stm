@@ -224,7 +224,13 @@ int cg_descent /*  return:
     double        (*value) (double *, INT, INT, double*, double*, double*, double*),  /* f = value (x, n) */
     void           (*grad) (double *, double *, INT, INT, double*, double*, double*, double*), /* grad (g, x, n) */
     double      (*valgrad) (double *, double *, INT, INT, double*, double*, double*, double*), /* f = valgrad (g,x,n)*/
-    double         *Work  /* either size 4n work array or NULL */
+    INT K_,
+    INT V_,
+    double* beta_,
+    double* doc_ct_,
+    double* mu_, 
+    double* siginv_,
+    double* Work  /* either size 4n work array or NULL */
 ) ;
 
 void cg_default /* set default parameter values */

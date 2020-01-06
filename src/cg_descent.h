@@ -74,7 +74,13 @@ PRIVATE int cg_tol
 
 PRIVATE int cg_line
 (
-    cg_com   *Com  /* cg com structure */
+    cg_com   *Com,  /* cg com structure */
+    INT K_,
+    INT V_,
+    double* beta_,
+    double* doc_ct_,
+    double* mu_, 
+    double* siginv_ 
 ) ;
 
 PRIVATE int cg_contract
@@ -85,14 +91,26 @@ PRIVATE int cg_contract
     double    *B, /* right side of bracketing interval */
     double   *fB, /* function value at b */
     double   *dB, /* derivative at b */
-    cg_com  *Com  /* cg com structure */
+    cg_com  *Com,  /* cg com structure */
+    INT K_,
+    INT V_,
+    double* beta_,
+    double* doc_ct_,
+    double* mu_, 
+    double* siginv_ 
 ) ;
 
 PRIVATE int cg_evaluate
 (
     char    *what, /* fg = evaluate func and grad, g = grad only,f = func only*/
     char     *nan, /* y means check function/derivative values for nan */
-    cg_com   *Com
+    cg_com   *Com,
+    INT K_,
+    INT V_,
+    double* beta_,
+    double* doc_ct_,
+    double* mu_, 
+    double* siginv_ 
 ) ;
 
 PRIVATE double cg_cubic

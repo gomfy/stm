@@ -207,20 +207,36 @@ double objlhood(double* eta,
                 double* mu,
                 double* siginv){
    
+   std::cerr<<"In objlhood..."<<std::endl;
+   
    arma::vec etas(eta, K, false, false);
+   std::cerr<<"etas: "<<etas<<std::endl;
+   
    arma::mat betas(beta, V, K, false, false);
+   std::cerr<<"betas: "<<betas<<std::endl;
+   
    arma::vec doc_cts(doc_ct, V, false, false);
+   std::cerr<<"doc_cts: "<<doc_cts<<std::endl;
+   
    arma::vec mus(mu, K, false, false);
+   std::cerr<<"mus: "<<mus<<std::endl;
+   
    arma::mat siginvs(siginv, K, K, false, false);
+   std::cerr<<"siginvs: "<<siginvs<<std::endl;
    
    arma::rowvec expeta(etas.size()+1); 
    expeta.fill(1); 
    for(std::size_t j=0; j <K;  j++){
       expeta(j) = exp(etas(j));
    }
+   std::cerr<<"expeta: "<<expeta<<std::endl;
    
    arma::vec diff = etas - mus;
+   std::cerr<<"diff: "<<diff<<std::endl;
+   
    double ndoc = sum(doc_cts);
+   std::cerr<<"ndoc: "<<ndoc<<std::endl;
+   
    double part1 = arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(sum(expeta)));
    double part2 = .5*arma::as_scalar(diff.t()*siginvs*diff);
    double out = part2 - part1;
@@ -237,11 +253,23 @@ void gradlhood(double* eta,
                double* mu,
                double* siginv){
    
+   std::cerr<<"In objlhood..."<<std::endl;
+   
    arma::vec etas(eta, K, false, false);
+   std::cerr<<"etas: "<<etas<<std::endl;
+   
    arma::mat betas(beta, V, K, false, false);
+   std::cerr<<"betas: "<<betas<<std::endl;
+   
    arma::vec doc_cts(doc_ct, V, false, false);
+   std::cerr<<"doc_cts: "<<doc_cts<<std::endl;
+   
    arma::vec mus(mu, K, false, false);
+   std::cerr<<"mus: "<<mus<<std::endl;
+   
    arma::mat siginvs(siginv, K, K, false, false);
+   std::cerr<<"siginvs: "<<siginvs<<std::endl;
+   
    arma::vec agrad(K);
    
    arma::colvec expeta(etas.size()+1); 
@@ -390,18 +418,51 @@ SEXP estepcpp( SEXP docs_,
       arma::vec magnitudes = sum(abs(ar_sigma), 1) - abs(dvec);
       //iterate over each row and set the minimum value of the diagonal to be the magnitude of the other terms
       int Km1 = dvec.size();
-      for(int j=0; j < Km1;  j++){
+      for(int j=0; j < Km1;  j++) {
          if(arma::as_scalar(dvec(j)) < arma::as_scalar(magnitudes(j))) dvec(j) = magnitudes(j); //enforce diagonal dominance 
       }
       //overwrite the diagonal of the hessian with our new object
       ar_sigma.diag() = dvec;
       //that was sufficient to ensure positive definiteness so we now do cholesky
       ar_sigmainv = arma::chol(ar_sigma);
+   } else {
+      std::cout<<"No diagonal dom adjustment needed..."<<std::endl;
    }
    
-   for(std::size_t i=0; i<N; ++i) {
-      cg_descent(ar_lambda_old.colptr(i), K-1, NULL, NULL, 1.e-8, objlhood, gradlhood, objgradlhood, NULL);
-   }
+   std::cerr<<"Solving the first optimization problem..."<<std::endl;
+   cg_descent(ar_lambda_old.colptr(0), 
+              K-1, 
+              NULL, 
+              NULL, 
+              1.e-8, 
+              objlhood, 
+              gradlhood, 
+              objgradlhood, 
+              V, 
+              K, 
+              ar_beta[0].memptr(), 
+              (double*) ar_docs[1].memptr(), 
+              ar_mu.memptr(), 
+              ar_sigmainv.memptr(), 
+              NULL);
+   
+   /*for(std::size_t i=0; i<N; ++i) {
+      cg_descent(ar_lambda_old.colptr(i), 
+                 K-1, 
+                 NULL, 
+                 NULL, 
+                 1.e-8, 
+                 objlhood, 
+                 gradlhood, 
+                 objgradlhood, 
+                 V, 
+                 K, 
+                 ar_beta[0].memptr(), 
+                 (double*) ar_docs[1].memptr(), 
+                 ar_mu.memptr(), 
+                 ar_sigmainv.memptr(), 
+                 NULL);
+   }*/
 
 
 }
