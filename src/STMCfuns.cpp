@@ -207,35 +207,35 @@ double objlhood(double* eta,
                 double* mu,
                 double* siginv){
    
-   std::cerr<<"In objlhood..."<<std::endl;
+   std::cout<<"In objlhood..."<<std::endl;
    
    arma::vec etas(eta, K, false, false);
-   std::cerr<<"etas: "<<etas<<std::endl;
+   std::cout<<"etas: "<<etas<<std::endl;
    
    arma::mat betas(beta, V, K, false, false);
-   std::cerr<<"betas: "<<betas<<std::endl;
+   std::cout<<"betas: "<<betas<<std::endl;
    
    arma::vec doc_cts(doc_ct, V, false, false);
-   std::cerr<<"doc_cts: "<<doc_cts<<std::endl;
+   std::cout<<"doc_cts: "<<doc_cts<<std::endl;
    
    arma::vec mus(mu, K, false, false);
-   std::cerr<<"mus: "<<mus<<std::endl;
+   std::cout<<"mus: "<<mus<<std::endl;
    
    arma::mat siginvs(siginv, K, K, false, false);
-   std::cerr<<"siginvs: "<<siginvs<<std::endl;
+   std::cout<<"siginvs: "<<siginvs<<std::endl;
    
    arma::rowvec expeta(etas.size()+1); 
    expeta.fill(1); 
    for(std::size_t j=0; j <K;  j++){
       expeta(j) = exp(etas(j));
    }
-   std::cerr<<"expeta: "<<expeta<<std::endl;
+   std::cout<<"expeta: "<<expeta<<std::endl;
    
    arma::vec diff = etas - mus;
-   std::cerr<<"diff: "<<diff<<std::endl;
+   std::cout<<"diff: "<<diff<<std::endl;
    
    double ndoc = sum(doc_cts);
-   std::cerr<<"ndoc: "<<ndoc<<std::endl;
+   std::cout<<"ndoc: "<<ndoc<<std::endl;
    
    double part1 = arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(sum(expeta)));
    double part2 = .5*arma::as_scalar(diff.t()*siginvs*diff);
@@ -253,22 +253,22 @@ void gradlhood(double* eta,
                double* mu,
                double* siginv){
    
-   std::cerr<<"In objlhood..."<<std::endl;
+   std::cout<<"In gradlhood..."<<std::endl;
    
    arma::vec etas(eta, K, false, false);
-   std::cerr<<"etas: "<<etas<<std::endl;
+   std::cout<<"etas: "<<etas<<std::endl;
    
    arma::mat betas(beta, V, K, false, false);
-   std::cerr<<"betas: "<<betas<<std::endl;
+   std::cout<<"betas: "<<betas<<std::endl;
    
    arma::vec doc_cts(doc_ct, V, false, false);
-   std::cerr<<"doc_cts: "<<doc_cts<<std::endl;
+   std::cout<<"doc_cts: "<<doc_cts<<std::endl;
    
    arma::vec mus(mu, K, false, false);
-   std::cerr<<"mus: "<<mus<<std::endl;
+   std::cout<<"mus: "<<mus<<std::endl;
    
    arma::mat siginvs(siginv, K, K, false, false);
-   std::cerr<<"siginvs: "<<siginvs<<std::endl;
+   std::cout<<"siginvs: "<<siginvs<<std::endl;
    
    arma::vec agrad(K);
    
@@ -295,14 +295,28 @@ double objgradlhood(double* eta,
                     double* mu,
                     double* siginv) {
    
+   std::cout<<"In objgradlhood..."<<std::endl;
+   std::cout<<"K: "<<K<<std::endl;
+   std::cout<<"V: "<<V<<std::endl;
+   
    arma::vec etas(eta, K, false, false);
-   arma::mat betas(beta, V, K, false, false);
+   //std::cout<<"etas: "<<etas<<std::endl;
+   
+   arma::mat betas(beta, K+1, V, false, false);
+   //std::cout<<"betas: "<<betas<<std::endl;
+   
    arma::vec doc_cts(doc_ct, V, false, false);
+   //std::cout<<"doc_cts: "<<doc_cts<<std::endl;
+   
    arma::vec mus(mu, K, false, false);
+   //std::cout<<"mus: "<<mus<<std::endl;
+   
    arma::mat siginvs(siginv, K, K, false, false);
+   //std::cout<<"siginvs: "<<siginvs<<std::endl;
+   
    arma::vec agrad(K);
    
-   arma::colvec expeta(etas.size()+1); 
+   arma::vec expeta(etas.size()+1); 
    expeta.fill(1);
    for(int j=0; j<K;  ++j)
       expeta(j) = exp(etas(j));
@@ -311,7 +325,9 @@ double objgradlhood(double* eta,
    arma::vec sd = siginvs*diff;
    double se = sum(expeta);
    double ndoc = sum(doc_cts);
-   double objval = 0.5*arma::as_scalar(diff.t()*sd) - arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(se));
+   double objval = 0.5*arma::as_scalar(diff.t()*sd); 
+   objval -= arma::as_scalar(log(expeta.t()*betas)*doc_cts);
+   objval -= ndoc*log(se);
    
    betas.each_col() %= expeta;
    arma::vec rt = betas*(doc_cts/arma::trans(sum(betas,0))) - (ndoc/se)*expeta;
@@ -429,7 +445,7 @@ SEXP estepcpp( SEXP docs_,
       std::cout<<"No diagonal dom adjustment needed..."<<std::endl;
    }
    
-   std::cerr<<"Solving the first optimization problem..."<<std::endl;
+   std::cout<<"Solving the first optimization problem..."<<std::endl;
    cg_descent(ar_lambda_old.colptr(0), 
               K-1, 
               NULL, 
@@ -438,8 +454,8 @@ SEXP estepcpp( SEXP docs_,
               objlhood, 
               gradlhood, 
               objgradlhood, 
+              K-1, 
               V, 
-              K, 
               ar_beta[0].memptr(), 
               (double*) ar_docs[1].memptr(), 
               ar_mu.memptr(), 
