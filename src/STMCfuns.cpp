@@ -337,6 +337,23 @@ double objgradlhood(double* eta,
    return objval;
 }
 
+// [[Rcpp::export]]
+arma::mat sumcpp(SEXP A_, SEXP B_) {
+   Rcpp::NumericMatrix A(A_);
+   arma::mat ar_A(A.begin(), A.nrow(), A.ncol(), false);
+   Rcpp::NumericMatrix B(B_);
+   arma::mat ar_B(B.begin(), B.nrow(), B.ncol(), false);
+   arma::mat ar_sum = ar_A + ar_B;
+   return ar_sum;
+}
+
+// [[Rcpp::export]]
+void asumcpp(SEXP SUM_, SEXP A_, SEXP B_) {
+   Rcpp::NumericVector SUM(SUM_);
+   Rcpp::NumericVector A(A_);
+   Rcpp::NumericVector B(B_);
+   SUM = A + B;
+}
 
 // [[Rcpp::export]]
 SEXP estepcpp( SEXP docs_, 
