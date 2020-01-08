@@ -359,8 +359,8 @@ void pluseqcpp_idx(SEXP LHS_, SEXP RHS_, SEXP IDX_) {
    arma::mat ar_RHS(RHS.begin(), RHS.nrow(), RHS.ncol(), false);
    Rcpp::IntegerVector idx(IDX_);
    arma::irowvec ar_idx(idx);   
-   for(int i=0; i<ar_RHS.n_cols; ++i)
-      ar_LHS.col(ar_idx[i]) += ar_RHS.col(i);
+   for(int i=0; i<ar_idx.n_elem; ++i)
+      ar_LHS.col((ar_idx[i]-1)) += ar_RHS.col(i);
 }
 
 // [[Rcpp::export]]
