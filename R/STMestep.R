@@ -85,8 +85,8 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     } else {
       #sigma.ss <- sigma.ss + doc.results$eta$nu
       #sigma.ss <- ar_sumcpp(sigma.ss, doc.results$eta$nu)
-      sigma.ss <- rc_sumcpp(sigma.ss, doc.results$eta$nu)
-      #arc_sumcpp(sigma.ss, sigma.ss, doc.results$eta$nu)
+      #sigma.ss <- rc_sumcpp(sigma.ss, doc.results$eta$nu)
+      pluseqcpp(sigma.ss, doc.results$eta$nu)
       
     }
     if(order_beta) {
@@ -101,8 +101,8 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     } else {
       #beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
       #beta.ss[[aspect]][,words] <- ar_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
-      beta.ss[[aspect]][,words] <- rc_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
-      #arc_sumcpp(beta.ss[[aspect]][,words], doc.results$phis, beta.ss[[aspect]][,words])
+      #beta.ss[[aspect]][,words] <- rc_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
+      pluseqcpp_idx(beta.ss[[aspect]], doc.results$phis, words)
     }
     bound[i] <- doc.results$bound
     lambda[[i]] <- c(doc.results$eta$lambda)

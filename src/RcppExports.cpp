@@ -53,7 +53,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // sumcpp
-arma::mat sumcpp(SEXP A_, SEXP B_);
+Rcpp::NumericVector sumcpp(SEXP A_, SEXP B_);
 RcppExport SEXP _stm_sumcpp(SEXP A_SEXP, SEXP B_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -64,15 +64,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// asumcpp
-void asumcpp(SEXP SUM_, SEXP A_, SEXP B_);
-RcppExport SEXP _stm_asumcpp(SEXP SUM_SEXP, SEXP A_SEXP, SEXP B_SEXP) {
+// pluseqcpp
+void pluseqcpp(SEXP LHS_, SEXP RHS_);
+RcppExport SEXP _stm_pluseqcpp(SEXP LHS_SEXP, SEXP RHS_SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type SUM_(SUM_SEXP);
-    Rcpp::traits::input_parameter< SEXP >::type A_(A_SEXP);
-    Rcpp::traits::input_parameter< SEXP >::type B_(B_SEXP);
-    asumcpp(SUM_, A_, B_);
+    Rcpp::traits::input_parameter< SEXP >::type LHS_(LHS_SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type RHS_(RHS_SEXP);
+    pluseqcpp(LHS_, RHS_);
+    return R_NilValue;
+END_RCPP
+}
+// pluseqcpp_idx
+void pluseqcpp_idx(SEXP LHS_, SEXP RHS_, SEXP IDX_);
+RcppExport SEXP _stm_pluseqcpp_idx(SEXP LHS_SEXP, SEXP RHS_SEXP, SEXP IDX_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type LHS_(LHS_SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type RHS_(RHS_SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type IDX_(IDX_SEXP);
+    pluseqcpp_idx(LHS_, RHS_, IDX_);
     return R_NilValue;
 END_RCPP
 }
@@ -101,7 +112,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stm_gradcpp", (DL_FUNC) &_stm_gradcpp, 5},
     {"_stm_hpbcpp", (DL_FUNC) &_stm_hpbcpp, 6},
     {"_stm_sumcpp", (DL_FUNC) &_stm_sumcpp, 2},
-    {"_stm_asumcpp", (DL_FUNC) &_stm_asumcpp, 3},
+    {"_stm_pluseqcpp", (DL_FUNC) &_stm_pluseqcpp, 2},
+    {"_stm_pluseqcpp_idx", (DL_FUNC) &_stm_pluseqcpp_idx, 3},
     {"_stm_estepcpp", (DL_FUNC) &_stm_estepcpp, 9},
     {NULL, NULL, 0}
 };

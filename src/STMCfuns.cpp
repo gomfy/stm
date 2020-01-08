@@ -338,28 +338,29 @@ double objgradlhood(double* eta,
 }
 
 // [[Rcpp::export]]
-arma::mat ar_sumcpp(SEXP A_, SEXP B_) {
-   Rcpp::NumericMatrix A(A_);
-   arma::mat ar_A(A.begin(), A.nrow(), A.ncol(), false);
-   Rcpp::NumericMatrix B(B_);
-   arma::mat ar_B(B.begin(), B.nrow(), B.ncol(), false);
-   arma::mat ar_sum = ar_A + ar_B;
-   return ar_sum;
-}
-
-// [[Rcpp::export]]
-Rcpp::NumericVector rc_sumcpp(SEXP A_, SEXP B_) {
+Rcpp::NumericVector sumcpp(SEXP A_, SEXP B_) {
    Rcpp::NumericVector A(A_);
    Rcpp::NumericVector B(B_);
    return (A + B);   
 }
 
 // [[Rcpp::export]]
-void arc_sumcpp(SEXP SUM_, SEXP A_, SEXP B_) {
-   Rcpp::NumericVector SUM(SUM_);
-   Rcpp::NumericVector A(A_);
-   Rcpp::NumericVector B(B_);
-   SUM = A + B;   
+void pluseqcpp(SEXP LHS_, SEXP RHS_) {
+   Rcpp::NumericVector LHS(LHS_);
+   Rcpp::NumericVector RHS(RHS_);
+   LHS += RHS;   
+}
+
+// [[Rcpp::export]]
+void pluseqcpp_idx(SEXP LHS_, SEXP RHS_, SEXP IDX_) {
+   Rcpp::NumericMatrix LHS(LHS_);
+   arma::mat ar_LHS(LHS.begin(), LHS.nrow(), LHS.ncol(), false);
+   Rcpp::NumericMatrix RHS(RHS_);
+   arma::mat ar_RHS(RHS.begin(), RHS.nrow(), RHS.ncol(), false);
+   Rcpp::IntegerVector idx(IDX_);
+   arma::irowvec ar_idx(idx);   
+   for(int i=0; i<ar_RHS.n_cols; ++i)
+      ar_LHS.col(ar_idx[i]) += ar_RHS.col(i);
 }
 
 // [[Rcpp::export]]
