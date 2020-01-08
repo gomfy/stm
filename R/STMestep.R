@@ -84,8 +84,10 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       stop("Calling order...")
     } else {
       #sigma.ss <- sigma.ss + doc.results$eta$nu
-      #sigma.ss <- sumcpp(sigma.ss, doc.results$eta$nu)
-      asumcpp(sigma.ss, sigma.ss, doc.results$eta$nu)
+      #sigma.ss <- ar_sumcpp(sigma.ss, doc.results$eta$nu)
+      sigma.ss <- rc_sumcpp(sigma.ss, doc.results$eta$nu)
+      #arc_sumcpp(sigma.ss, sigma.ss, doc.results$eta$nu)
+      
     }
     if(order_beta) {
       #more efficient than this would be to stack all the C's underneath
@@ -98,8 +100,9 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       stop("Calling order...")
     } else {
       #beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
-      #beta.ss[[aspect]][,words] <- sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
-      asumcpp(beta.ss[[aspect]][,words], doc.results$phis, beta.ss[[aspect]][,words])
+      #beta.ss[[aspect]][,words] <- ar_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
+      beta.ss[[aspect]][,words] <- rc_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
+      #arc_sumcpp(beta.ss[[aspect]][,words], doc.results$phis, beta.ss[[aspect]][,words])
     }
     bound[i] <- doc.results$bound
     lambda[[i]] <- c(doc.results$eta$lambda)
