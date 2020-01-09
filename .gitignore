@@ -6,3 +6,4 @@ Meta
 .log
 .sav
 stm.Rproj
+packrat/lib*/

@@ -282,7 +282,7 @@ void gradlhood(double* eta,
    arma::vec part2 = siginvs*(etas - mus);
    part1.shed_row(K);
    agrad = part2-part1;
-   grad = agrad.memptr();
+   std::memcpy(grad, agrad.memptr(), sizeof(double)*K);
 }
 
 
@@ -333,7 +333,7 @@ double objgradlhood(double* eta,
    arma::vec rt = betas*(doc_cts/arma::trans(sum(betas,0))) - (ndoc/se)*expeta;
    rt.shed_row(K);
    agrad = sd - rt;
-   grad = agrad.memptr();
+   std::memcpy(grad, agrad.memptr(), sizeof(double)*K);
    return objval;
 }
 

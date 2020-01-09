@@ -84,8 +84,6 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       stop("Calling order...")
     } else {
       #sigma.ss <- sigma.ss + doc.results$eta$nu
-      #sigma.ss <- ar_sumcpp(sigma.ss, doc.results$eta$nu)
-      #sigma.ss <- rc_sumcpp(sigma.ss, doc.results$eta$nu)
       pluseqcpp(sigma.ss, doc.results$eta$nu)
       
     }
@@ -100,8 +98,6 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       stop("Calling order...")
     } else {
       #beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
-      #beta.ss[[aspect]][,words] <- ar_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
-      #beta.ss[[aspect]][,words] <- rc_sumcpp(doc.results$phis, beta.ss[[aspect]][,words])
       pluseqcpp_idx(beta.ss[[aspect]], doc.results$phis, words)
     }
     bound[i] <- doc.results$bound
