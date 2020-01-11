@@ -1,12 +1,8 @@
 // [[Rcpp::depends(RcppArmadillo)]]
-
-#include "RcppArmadillo.h"
-extern "C" {
-   #include "cg_user.h"
-}
-
 // [[Rcpp::plugins("cpp11")]]
-// [[Rcpp::depends(RcppArmadillo)]]
+#include "RcppArmadillo.h"
+#include <R_ext/Applic.h>
+#include "stm_types.h"
 
 // [[Rcpp::export]]
 double lhoodcpp(SEXP eta,
@@ -199,6 +195,54 @@ SEXP hpbcpp(SEXP eta,
 }
 
 
+problem_data* problem_data_alloc(Rcpp::NumericMatrix* beta_,
+                                 Rcpp::NumericVector* doc_ct_,
+                                 Rcpp::NumericVector* mu_,
+                                 Rcpp::NumericMatrix* siginv_) {
+   problem_data* pr = new problem_data;
+   pr->beta = new arma::mat(beta_->begin(), beta_->nrow(), beta_->ncol());
+   pr->doc_ct = new arma::vec(doc_ct_->begin(), doc_ct_->size(), false);
+   pr->mu = new arma::vec(mu_->begin(), mu_->size(), false);
+   pr->siginv = new arma::mat(siginv_->begin(), siginv_->nrow(), siginv_->ncol(), false);
+}
+
+void* problem_data_free(problem_data* pr) {
+   if(pr) {
+      if(pr->beta)
+         delete pr->beta;
+      if(pr->doc_ct)
+         delete pr->doc_ct;
+      if(pr->mu)
+         delete pr->mu;
+      if(pr->siginv)
+         delete pr->siginv;
+   }
+}
+
+
+opt_method hash_opt_method (std::string const& method) {
+   if (method == "BFGS") return BFGS;
+   if (method == "L-BFGS-B") return LBFGSB;
+   if (method == "CG") return CG;
+}
+
+
+double objlhood(int n, double *par, void *ex) {
+   problem_data* pr = (problem_data*) ex;
+   arma::vec eta(par, n, false, false);
+   arma::rowvec expeta(n+1); 
+   expeta.fill(1.0); 
+   for(int j=0; j<n;  ++j)
+      expeta(j) = exp(eta(j));
+   
+   double ndoc = sum(*pr->doc_ct);
+   double first = arma::as_scalar(log(expeta*(*pr->beta))*(*pr->doc_ct) - ndoc*log(sum(expeta)));
+   arma::vec diff = eta - *pr->mu;
+   double second = .5*arma::as_scalar(diff.t()*(*pr->siginv)*diff);
+   return (first - second);
+}
+
+/*
 double objlhood(double* eta,
                 long int K,
                 long int V,
@@ -242,8 +286,27 @@ double objlhood(double* eta,
    double out = part2 - part1;
    return out;
 }
+*/
 
+void gradlhood(int n, double *par, double *gr, void *ex) {
+   problem_data* pr = (problem_data*) ex;
+   arma::vec agrad(n);
+   arma::vec eta(par, n, false, false);
+   arma::rowvec expeta(n+1); 
+   expeta.fill(1); 
+   for(int j=0; j<n;  j++) {
+      expeta(j) = exp(eta(j));
+   }
+   
+   pr->beta->each_col() %= expeta;
+   arma::vec first = (*pr->beta)*((*pr->doc_ct)/arma::trans(sum((*pr->beta),0))) - (sum(*pr->doc_ct)/sum(expeta))*expeta;
+   arma::vec second = *pr->siginv*(eta - *pr->mu);
+   first.shed_row(n);
+   agrad = second-first; 
+   std::memcpy(gr, agrad.memptr(), sizeof(double)*n);
+}
 
+/*
 void gradlhood(double* eta,
                double* grad,
                long int K,
@@ -284,58 +347,8 @@ void gradlhood(double* eta,
    agrad = part2-part1;
    std::memcpy(grad, agrad.memptr(), sizeof(double)*K);
 }
+*/
 
-
-double objgradlhood(double* eta,
-                    double* grad,
-                    long int K,
-                    long int V,
-                    double* beta,
-                    double* doc_ct,
-                    double* mu,
-                    double* siginv) {
-   
-   std::cout<<"In objgradlhood..."<<std::endl;
-   std::cout<<"K: "<<K<<std::endl;
-   std::cout<<"V: "<<V<<std::endl;
-   
-   arma::vec etas(eta, K, false, false);
-   //std::cout<<"etas: "<<etas<<std::endl;
-   
-   arma::mat betas(beta, K+1, V, false, false);
-   //std::cout<<"betas: "<<betas<<std::endl;
-   
-   arma::vec doc_cts(doc_ct, V, false, false);
-   //std::cout<<"doc_cts: "<<doc_cts<<std::endl;
-   
-   arma::vec mus(mu, K, false, false);
-   //std::cout<<"mus: "<<mus<<std::endl;
-   
-   arma::mat siginvs(siginv, K, K, false, false);
-   //std::cout<<"siginvs: "<<siginvs<<std::endl;
-   
-   arma::vec agrad(K);
-   
-   arma::vec expeta(etas.size()+1); 
-   expeta.fill(1);
-   for(int j=0; j<K;  ++j)
-      expeta(j) = exp(etas(j));
-
-   arma::vec diff = etas - mus;
-   arma::vec sd = siginvs*diff;
-   double se = sum(expeta);
-   double ndoc = sum(doc_cts);
-   double objval = 0.5*arma::as_scalar(diff.t()*sd); 
-   objval -= arma::as_scalar(log(expeta.t()*betas)*doc_cts);
-   objval -= ndoc*log(se);
-   
-   betas.each_col() %= expeta;
-   arma::vec rt = betas*(doc_cts/arma::trans(sum(betas,0))) - (ndoc/se)*expeta;
-   rt.shed_row(K);
-   agrad = sd - rt;
-   std::memcpy(grad, agrad.memptr(), sizeof(double)*K);
-   return objval;
-}
 
 // [[Rcpp::export]]
 Rcpp::NumericVector sumcpp(SEXP A_, SEXP B_) {
@@ -364,7 +377,7 @@ void pluseqcpp_idx(SEXP LHS_, SEXP RHS_, SEXP IDX_) {
 }
 
 // [[Rcpp::export]]
-SEXP estepcpp( SEXP docs_, 
+SEXP estepcpp(SEXP docs_, 
             SEXP beta_idx_, 
             SEXP update_mu_, // null allows for intercept only model  
             SEXP beta_, 
@@ -373,6 +386,9 @@ SEXP estepcpp( SEXP docs_,
             SEXP sigma_,  
             SEXP method_,
             SEXP verbose_) {
+   
+   ExactSum mySum;
+   
    
    // According to this: https://thecoatlessprofessor.com/programming/cpp/unofficial-rcpp-api-documentation/#vmld
    // the code below should not do any deep copies of memory since the types are respected i.e. IntegerMatrix 
@@ -428,6 +444,7 @@ SEXP estepcpp( SEXP docs_,
    std::size_t N = docs.length();
    std::size_t A = beta.length();
    
+   
    // Print some debug info
    std::cout<<"Number of documents.length(): "<<docs.length()<<std::endl;
    std::cout<<"Number of beta indices: "<<beta_idx.length()<<std::endl;
@@ -471,7 +488,30 @@ SEXP estepcpp( SEXP docs_,
    }
    
    std::cout<<"Solving the first optimization problem..."<<std::endl;
-   cg_descent(ar_lambda_old.colptr(0), 
+   
+   optimfn objlhood;
+   optimgr gradlhood;
+   
+   for(arma::uword d=0; ar_docs.size(); ++d) {
+      arma::vec init = ar_lambda_old.row(d);
+      problem_data* pr = problem_data_alloc();
+      switch (hash_opt_method(collapse(method))) {
+      case BFGS:
+         vmmin(K-1, init.memptr(), 0.0, objlhood, gradlhood, 500, 0, NULL, 1e-8, 1e-8, 0, pr, );
+         break;
+      case LBFGSB:
+         
+         break;
+      case CG:
+         
+         break;
+         /*   case default:
+          break; */
+         
+      }
+   }
+   
+   /*cg_descent(ar_lambda_old.colptr(0), 
               K-1, 
               NULL, 
               NULL, 
@@ -486,6 +526,7 @@ SEXP estepcpp( SEXP docs_,
               ar_mu.memptr(), 
               ar_sigmainv.memptr(), 
               NULL);
+    */
    
    /*for(std::size_t i=0; i<N; ++i) {
       cg_descent(ar_lambda_old.colptr(i), 

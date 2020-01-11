@@ -138,7 +138,7 @@ stm.control <- function(documents, vocab, settings, model=NULL) {
       t1 <- proc.time()
       #run the model
       
-      suffstats <- estepcpp(docs_=documents, 
+      estepcpp(docs_=documents, 
                beta_idx_=betaindex,
                update_mu_=(!is.null(mu$gamma)),
                beta_=beta$beta,
@@ -147,16 +147,16 @@ stm.control <- function(documents, vocab, settings, model=NULL) {
                sigma_=sigma,
                method_=settings$method,
                verbose_=verbose)
-      stop("Ran first estep...")
       
-      # suffstats <- estep(documents=documents, beta.index=betaindex,
-      #                         update.mu=(!is.null(mu$gamma)),
-      #                         beta$beta, lambda, mu$mu, sigma,
-      #                         order_sigma=settings$order$sigma, 
-      #                         order_beta=settings$order$beta, 
-      #                         randomize=settings$order$randomize,
-      #                         method=settings$method,
-      #                         verbose)
+      suffstats <- estep(documents=documents, beta.index=betaindex,
+                              update.mu=(!is.null(mu$gamma)),
+                              beta$beta, lambda, mu$mu, sigma,
+                              order_sigma=settings$order$sigma,
+                              order_beta=settings$order$beta,
+                              randomize=settings$order$randomize,
+                              method=settings$method,
+                              verbose)
+      
       randomizations <- rbind(randomizations, suffstats$vec)
       msg <- sprintf("Completed E-Step (%d seconds). \n", floor((proc.time()-t1)[3]))
       if(verbose) cat(msg)
