@@ -349,6 +349,59 @@ void gradlhood(double* eta,
 }
 */
 
+SEXP n_mat_sumcpp(SEXP sum_, SEXP c_=NULL, SEXP input_=NULL) {
+ 
+   Rcpp::NumericMatrix sum(sum_);
+   arma::mat asum(sum.begin(), sum.nrow(), sum.ncol(), false); 
+   arma::mat* ac = NULL;
+ 
+   if(c_==NULL) 
+      ac = new arma::mat(asum.n_rows, asum.n_cols, arma::fill::zeros);
+ 
+   if(input_==NULL) 
+      return Rcpp::List::create(Rcpp::Named("sum") = asum, Rcpp::Named("c") = *ac);
+ 
+   Rcpp::NumericMatrix input(input_);
+   arma::mat ainput(input.begin(), input.nrow(), input.ncol(), false);
+   arma::mat at(asum.n_rows, asum.n_cols, arma::fill::zeros);
+   at = asum + ainput;
+   
+   for(arma::uword i=0; i<asum.n_cols; ++i) {
+      for(arma::uword j=0; j<asum.n_rows; ++j) {
+         double asum_ij = asum(i,j);
+         double ainp_ij = ainput(i,j);
+         double at_ij = at(i,j);
+         
+         if(std::abs(asum_ij) >= std::abs(ainp_ij)) {
+            ac->at(i,j) += (asum_ij - at_ij) + ainp_ij;
+         }
+         else {
+            ac->at(i,j) += (ainp_ij - at_ij) + asum_ij;
+         }
+      }
+   }
+   
+   asum = at;
+   return Rcpp::List::create(Rcpp::Named("sum") = asum, Rcpp::Named("c") = *ac);
+}
+
+
+/*SEXP n_mat_sumcpp(arma::mat sum, arma::mat c=NULL, arma::mat input=NULL) {
+   
+   arma::mat* cptr = NULL;
+   if(c==NULL) 
+      cptr = new arma::mat(sum.n_rows, sum.n_cols, arma::fill::zeros);
+   c=*cptr;
+   if(input==NULL) 
+      return Rcpp::List::create(Rcpp::Named("sum") = asum, Rcpp::Named("c") = *ac);
+   Rcpp::NumericMatrix input(input_);
+   arma::mat ainput(input.begin(), input.nrow(), input.ncol(), false);
+   arma::mat t(asum.n_rows, asum.n_cols, arma::fill::zeros);
+   t = sum + input;
+   
+   
+}*/
+
 
 // [[Rcpp::export]]
 Rcpp::NumericVector sumcpp(SEXP A_, SEXP B_) {
@@ -375,6 +428,7 @@ void pluseqcpp_idx(SEXP LHS_, SEXP RHS_, SEXP IDX_) {
    for(int i=0; i<ar_idx.n_elem; ++i)
       ar_LHS.col((ar_idx[i]-1)) += ar_RHS.col(i);
 }
+
 
 // [[Rcpp::export]]
 SEXP estepcpp(SEXP docs_, 
@@ -491,7 +545,8 @@ SEXP estepcpp(SEXP docs_,
    
    optimfn objlhood;
    optimgr gradlhood;
-   
+ 
+/*  
    for(arma::uword d=0; ar_docs.size(); ++d) {
       arma::vec init = ar_lambda_old.row(d);
       problem_data* pr = problem_data_alloc();
@@ -505,12 +560,11 @@ SEXP estepcpp(SEXP docs_,
       case CG:
          
          break;
-         /*   case default:
-          break; */
-         
+      case default:
+          break;
       }
    }
-   
+*/   
    /*cg_descent(ar_lambda_old.colptr(0), 
               K-1, 
               NULL, 

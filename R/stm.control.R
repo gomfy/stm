@@ -138,15 +138,15 @@ stm.control <- function(documents, vocab, settings, model=NULL) {
       t1 <- proc.time()
       #run the model
       
-      estepcpp(docs_=documents, 
-               beta_idx_=betaindex,
-               update_mu_=(!is.null(mu$gamma)),
-               beta_=beta$beta,
-               lambda_old_=lambda,
-               mu_=mu$mu,
-               sigma_=sigma,
-               method_=settings$method,
-               verbose_=verbose)
+      # estepcpp(docs_=documents, 
+      #          beta_idx_=betaindex,
+      #          update_mu_=(!is.null(mu$gamma)),
+      #          beta_=beta$beta,
+      #          lambda_old_=lambda,
+      #          mu_=mu$mu,
+      #          sigma_=sigma,
+      #          method_=settings$method,
+      #          verbose_=verbose)
       
       suffstats <- estep(documents=documents, beta.index=betaindex,
                               update.mu=(!is.null(mu$gamma)),
