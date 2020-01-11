@@ -81,11 +81,9 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     # update sufficient statistics 
     if(order_sigma) {
       sigma.ss <- n_mat_sum(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu)
-      stop("Calling order...")
     } else {
-      #sigma.ss <- sigma.ss + doc.results$eta$nu
-      pluseqcpp(sigma.ss, doc.results$eta$nu)
-      
+      sigma.ss <- sigma.ss + doc.results$eta$nu
+      #pluseqcpp(sigma.ss, doc.results$eta$nu)
     }
     if(order_beta) {
       #more efficient than this would be to stack all the C's underneath
@@ -95,10 +93,9 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
                           doc.results$phis)
       beta.ss[[aspect]][[1]][,words] <- o_beta[[1]]
       beta.ss[[aspect]][[2]][,words] <- o_beta[[2]]
-      stop("Calling order...")
     } else {
-      #beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
-      pluseqcpp_idx(beta.ss[[aspect]], doc.results$phis, words)
+      beta.ss[[aspect]][,words] <- doc.results$phis + beta.ss[[aspect]][,words]
+      #pluseqcpp_idx(beta.ss[[aspect]], doc.results$phis, words)
     }
     bound[i] <- doc.results$bound
     lambda[[i]] <- c(doc.results$eta$lambda)
