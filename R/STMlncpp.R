@@ -13,14 +13,16 @@ logisticnormalcpp <- function(eta, mu, siginv, beta, doc, sigmaentropy,
   doc.ct <- doc[2,]
   Ndoc <- sum(doc.ct)
   #even at K=100, BFGS is faster than L-BFGS
-  optim.out <- optimr::optimr(par=eta, fn=lhoodcpp, gr=gradcpp,
+  print("before calling optimr routine")
+  optim.out <- optim(par=eta, fn=lhoodcpp, gr=gradcpp,
                      method=method, control=control,
                      doc_ct=doc.ct, mu=mu,
                      siginv=siginv, beta=beta)
-  
+  print("after calling optimr routine")
   if(!hpbcpp) return(list(eta=list(lambda=optim.out$par)))
   
   #Solve for Hessian/Phi/Bound returning the result
+  print("calling hpbcpp routine")
   hpbcpp(optim.out$par, doc_ct=doc.ct, mu=mu,
          siginv=siginv, beta=beta,
          sigmaentropy=sigmaentropy)

@@ -13,19 +13,3 @@ hpbcpp <- function(eta, beta, doc_ct, mu, siginv, sigmaentropy) {
     .Call(`_stm_hpbcpp`, eta, beta, doc_ct, mu, siginv, sigmaentropy)
 }
 
-sumcpp <- function(A_, B_) {
-    .Call(`_stm_sumcpp`, A_, B_)
-}
-
-pluseqcpp <- function(LHS_, RHS_) {
-    invisible(.Call(`_stm_pluseqcpp`, LHS_, RHS_))
-}
-
-pluseqcpp_idx <- function(LHS_, RHS_, IDX_) {
-    invisible(.Call(`_stm_pluseqcpp_idx`, LHS_, RHS_, IDX_))
-}
-
-estepcpp <- function(docs_, beta_idx_, update_mu_, beta_, lambda_old_, mu_, sigma_, method_, verbose_) {
-    .Call(`_stm_estepcpp`, docs_, beta_idx_, update_mu_, beta_, lambda_old_, mu_, sigma_, method_, verbose_)
-}
-

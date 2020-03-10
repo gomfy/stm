@@ -1,8 +1,8 @@
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins("cpp11")]]
 #include "RcppArmadillo.h"
-#include <R_ext/Applic.h>
-#include "stm_types.h"
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins("cpp11")]]
 
 // [[Rcpp::export]]
 double lhoodcpp(SEXP eta,
@@ -10,29 +10,50 @@ double lhoodcpp(SEXP eta,
                    SEXP doc_ct,
                    SEXP mu,
                    SEXP siginv){
-   
+   std::cout<<"Calling lhoodcpp"<<std::endl;
    Rcpp::NumericVector etav(eta); 
    arma::vec etas(etav.begin(), etav.size(), false);
+   
+   std::cout<<"betam"<<std::endl;
    Rcpp::NumericMatrix betam(beta);
    arma::mat betas(betam.begin(), betam.nrow(), betam.ncol(), false);
+   
+   std::cout<<"doc_ctv"<<std::endl;
    Rcpp::NumericVector doc_ctv(doc_ct);
    arma::vec doc_cts(doc_ctv.begin(), doc_ctv.size(), false);
+   
+   std::cout<<"muv"<<std::endl;
    Rcpp::NumericVector muv(mu);
    arma::vec mus(muv.begin(), muv.size(), false);
+   
+   std::cout<<"siginv"<<std::endl;
    Rcpp::NumericMatrix siginvm(siginv);
    arma::mat siginvs(siginvm.begin(), siginvm.nrow(), siginvm.ncol(), false);
    
+   std::cout<<"expeta"<<std::endl;
    arma::rowvec expeta(etas.size()+1); 
    expeta.fill(1);
    int neta = etav.size(); 
    for(int j=0; j <neta;  j++){
      expeta(j) = exp(etas(j));
    }
+   
+   std::cout<<"ndoc"<<std::endl;
    double ndoc = sum(doc_cts);
+   
+   std::cout<<"part1"<<std::endl;
    double part1 = arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(sum(expeta)));
+   
+   std::cout<<"diff"<<std::endl;
    arma::vec diff = etas - mus;
+
+   std::cout<<"part2"<<std::endl;
    double part2 = .5*arma::as_scalar(diff.t()*siginvs*diff);
+   
+   std::cout<<"out"<<std::endl;
    double out = part2 - part1;
+   
+   std::cout<<"Finish lhoodcpp"<<std::endl;
    return out;
 }
 
@@ -42,7 +63,7 @@ arma::vec gradcpp(SEXP eta,
                    SEXP doc_ct,
                    SEXP mu,
                    SEXP siginv){
-   
+   std::cout<<"Calling gradcpp"<<std::endl;   
    Rcpp::NumericVector etav(eta); 
    arma::vec etas(etav.begin(), etav.size(), false);
    Rcpp::NumericMatrix betam(beta);
@@ -64,6 +85,7 @@ arma::vec gradcpp(SEXP eta,
     arma::vec part1 = betas*(doc_cts/arma::trans(sum(betas,0))) - (sum(doc_cts)/sum(expeta))*expeta;
     arma::vec part2 = siginvs*(etas - mus);
     part1.shed_row(neta);
+    std::cout<<"Finish gradcpp"<<std::endl;
     return part2-part1;
 }
 
@@ -194,6 +216,7 @@ SEXP hpbcpp(SEXP eta,
         );
 }
 
+/*
 
 problem_data* problem_data_alloc(Rcpp::NumericMatrix* beta_,
                                  Rcpp::NumericVector* doc_ct_,
@@ -241,6 +264,7 @@ double objlhood(int n, double *par, void *ex) {
    double second = .5*arma::as_scalar(diff.t()*(*pr->siginv)*diff);
    return (first - second);
 }
+*/
 
 /*
 double objlhood(double* eta,
@@ -288,6 +312,7 @@ double objlhood(double* eta,
 }
 */
 
+/*
 void gradlhood(int n, double *par, double *gr, void *ex) {
    problem_data* pr = (problem_data*) ex;
    arma::vec agrad(n);
@@ -305,6 +330,7 @@ void gradlhood(int n, double *par, double *gr, void *ex) {
    agrad = second-first; 
    std::memcpy(gr, agrad.memptr(), sizeof(double)*n);
 }
+*/
 
 /*
 void gradlhood(double* eta,
@@ -402,7 +428,7 @@ SEXP n_mat_sumcpp(SEXP sum_, SEXP c_=NULL, SEXP input_=NULL) {
    
 }*/
 
-
+/*
 // [[Rcpp::export]]
 Rcpp::NumericVector sumcpp(SEXP A_, SEXP B_) {
    Rcpp::NumericVector A(A_);
@@ -428,8 +454,9 @@ void pluseqcpp_idx(SEXP LHS_, SEXP RHS_, SEXP IDX_) {
    for(int i=0; i<ar_idx.n_elem; ++i)
       ar_LHS.col((ar_idx[i]-1)) += ar_RHS.col(i);
 }
+*/
 
-
+/*
 // [[Rcpp::export]]
 SEXP estepcpp(SEXP docs_, 
             SEXP beta_idx_, 
@@ -546,7 +573,7 @@ SEXP estepcpp(SEXP docs_,
    optimfn objlhood;
    optimgr gradlhood;
  
-/*  
+
    for(arma::uword d=0; ar_docs.size(); ++d) {
       arma::vec init = ar_lambda_old.row(d);
       problem_data* pr = problem_data_alloc();
@@ -561,11 +588,10 @@ SEXP estepcpp(SEXP docs_,
          
          break;
       case default:
-          break;
+          break;  
       }
    }
-*/   
-   /*cg_descent(ar_lambda_old.colptr(0), 
+   cg_descent(ar_lambda_old.colptr(0), 
               K-1, 
               NULL, 
               NULL, 
@@ -580,9 +606,9 @@ SEXP estepcpp(SEXP docs_,
               ar_mu.memptr(), 
               ar_sigmainv.memptr(), 
               NULL);
-    */
    
-   /*for(std::size_t i=0; i<N; ++i) {
+   
+   for(std::size_t i=0; i<N; ++i) {
       cg_descent(ar_lambda_old.colptr(i), 
                  K-1, 
                  NULL, 
@@ -598,9 +624,7 @@ SEXP estepcpp(SEXP docs_,
                  ar_mu.memptr(), 
                  ar_sigmainv.memptr(), 
                  NULL);
-   }*/
-
-
+   }
 }
-
+*/
 
