@@ -29,14 +29,16 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
   if(!update.mu) mu.i <- as.numeric(mu)
   # 1) Initialize Sufficient Statistics 
   if(order_sigma) {
-    sigma.ss <- n_mat_sum(diag(0, nrow=(K-1)))
+    sigma.ss <- list(sum = diag(0, nrow=(K-1)), c = diag(0, nrow=(K-1)))
+    #sigma.ss <- n_mat_sum(diag(0, nrow=(K-1)))
   } else {
     sigma.ss <- diag(0, nrow=(K-1))
   }
   if(order_beta) {
     beta.ss <- vector(mode="list", length=A)
     for(i in 1:A) {
-      beta.ss[[i]] <- n_mat_sum(matrix(0, nrow=K,ncol=V))
+      beta.ss[[i]] <- list(sum = matrix(0, nrow=K,ncol=V), c = matrix(0, nrow=K,ncol=V))
+      #beta.ss[[i]] <- n_mat_sum(matrix(0, nrow=K,ncol=V))
     }
   } else {
     beta.ss <- vector(mode="list", length=A)
@@ -75,10 +77,8 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     beta.i <- beta[[aspect]][,words,drop=FALSE]
     
     #infer the document
-    print("before opt")
     doc.results <- logisticnormalcpp(eta=init, mu=mu.i, siginv=siginv, beta=beta.i, 
                                   doc=doc, sigmaentropy=sigmaentropy, method=method)
-    print("after opt")
     
     # update sufficient statistics 
     if(order_sigma) {

@@ -10,27 +10,21 @@ double lhoodcpp(SEXP eta,
                    SEXP doc_ct,
                    SEXP mu,
                    SEXP siginv){
-   std::cout<<"Calling lhoodcpp"<<std::endl;
    Rcpp::NumericVector etav(eta); 
    arma::vec etas(etav.begin(), etav.size(), false);
    
-   std::cout<<"betam"<<std::endl;
    Rcpp::NumericMatrix betam(beta);
    arma::mat betas(betam.begin(), betam.nrow(), betam.ncol(), false);
    
-   std::cout<<"doc_ctv"<<std::endl;
    Rcpp::NumericVector doc_ctv(doc_ct);
    arma::vec doc_cts(doc_ctv.begin(), doc_ctv.size(), false);
    
-   std::cout<<"muv"<<std::endl;
    Rcpp::NumericVector muv(mu);
    arma::vec mus(muv.begin(), muv.size(), false);
    
-   std::cout<<"siginv"<<std::endl;
    Rcpp::NumericMatrix siginvm(siginv);
    arma::mat siginvs(siginvm.begin(), siginvm.nrow(), siginvm.ncol(), false);
    
-   std::cout<<"expeta"<<std::endl;
    arma::rowvec expeta(etas.size()+1); 
    expeta.fill(1);
    int neta = etav.size(); 
@@ -38,22 +32,12 @@ double lhoodcpp(SEXP eta,
      expeta(j) = exp(etas(j));
    }
    
-   std::cout<<"ndoc"<<std::endl;
    double ndoc = sum(doc_cts);
-   
-   std::cout<<"part1"<<std::endl;
    double part1 = arma::as_scalar(log(expeta*betas)*doc_cts - ndoc*log(sum(expeta)));
-   
-   std::cout<<"diff"<<std::endl;
    arma::vec diff = etas - mus;
-
-   std::cout<<"part2"<<std::endl;
    double part2 = .5*arma::as_scalar(diff.t()*siginvs*diff);
-   
-   std::cout<<"out"<<std::endl;
    double out = part2 - part1;
    
-   std::cout<<"Finish lhoodcpp"<<std::endl;
    return out;
 }
 
@@ -63,7 +47,7 @@ arma::vec gradcpp(SEXP eta,
                    SEXP doc_ct,
                    SEXP mu,
                    SEXP siginv){
-   std::cout<<"Calling gradcpp"<<std::endl;   
+   
    Rcpp::NumericVector etav(eta); 
    arma::vec etas(etav.begin(), etav.size(), false);
    Rcpp::NumericMatrix betam(beta);
@@ -85,7 +69,6 @@ arma::vec gradcpp(SEXP eta,
     arma::vec part1 = betas*(doc_cts/arma::trans(sum(betas,0))) - (sum(doc_cts)/sum(expeta))*expeta;
     arma::vec part2 = siginvs*(etas - mus);
     part1.shed_row(neta);
-    std::cout<<"Finish gradcpp"<<std::endl;
     return part2-part1;
 }
 
@@ -375,20 +358,19 @@ void gradlhood(double* eta,
 }
 */
 
-SEXP n_mat_sumcpp(SEXP sum_, SEXP c_=NULL, SEXP input_=NULL) {
- 
+
+// [[Rcpp::export]]
+SEXP n_mat_sumcpp(SEXP sum_, SEXP c_, SEXP input_) {
+   
    Rcpp::NumericMatrix sum(sum_);
    arma::mat asum(sum.begin(), sum.nrow(), sum.ncol(), false); 
-   arma::mat* ac = NULL;
- 
-   if(c_==NULL) 
-      ac = new arma::mat(asum.n_rows, asum.n_cols, arma::fill::zeros);
- 
-   if(input_==NULL) 
-      return Rcpp::List::create(Rcpp::Named("sum") = asum, Rcpp::Named("c") = *ac);
- 
+   
+   Rcpp::NumericMatrix c(c_);
+   arma::mat ac(c.begin(), c.nrow(), c.ncol(), false);
+
    Rcpp::NumericMatrix input(input_);
    arma::mat ainput(input.begin(), input.nrow(), input.ncol(), false);
+ 
    arma::mat at(asum.n_rows, asum.n_cols, arma::fill::zeros);
    at = asum + ainput;
    
@@ -399,16 +381,16 @@ SEXP n_mat_sumcpp(SEXP sum_, SEXP c_=NULL, SEXP input_=NULL) {
          double at_ij = at(i,j);
          
          if(std::abs(asum_ij) >= std::abs(ainp_ij)) {
-            ac->at(i,j) += (asum_ij - at_ij) + ainp_ij;
+            ac.at(i,j) += (asum_ij - at_ij) + ainp_ij;
          }
          else {
-            ac->at(i,j) += (ainp_ij - at_ij) + asum_ij;
+            ac.at(i,j) += (ainp_ij - at_ij) + asum_ij;
          }
       }
    }
    
    asum = at;
-   return Rcpp::List::create(Rcpp::Named("sum") = asum, Rcpp::Named("c") = *ac);
+   return Rcpp::List::create(Rcpp::Named("sum") = asum, Rcpp::Named("c") = ac);
 }
 
 

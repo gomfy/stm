@@ -2,6 +2,7 @@
 // Created by gomfy on 01/10/20.
 //
 
+/*
 #pragma once
 
 #include "ExactSum.h"
@@ -23,3 +24,4 @@ typedef struct problem_data {
   arma::vec* mu;
   arma::mat* siginv;
 } problem_data;
+*/
