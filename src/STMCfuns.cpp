@@ -374,8 +374,8 @@ SEXP n_mat_sumcpp(SEXP sum_, SEXP c_, SEXP input_) {
    arma::mat at(asum.n_rows, asum.n_cols, arma::fill::zeros);
    at = asum + ainput;
    
-   for(arma::uword i=0; i<asum.n_cols; ++i) {
-      for(arma::uword j=0; j<asum.n_rows; ++j) {
+   for(arma::uword j=0; j<asum.n_cols; ++j) {
+      for(arma::uword i=0; i<asum.n_rows; ++i) {
          double asum_ij = asum(i,j);
          double ainp_ij = ainput(i,j);
          double at_ij = at(i,j);

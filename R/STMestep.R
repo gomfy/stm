@@ -82,7 +82,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     
     # update sufficient statistics 
     if(order_sigma) {
-      sigma.ss <- n_mat_sum(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu)
+      sigma.ss <- n_mat_sumcpp(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu)
     } else {
       sigma.ss <- sigma.ss + doc.results$eta$nu
       #pluseqcpp(sigma.ss, doc.results$eta$nu)
@@ -90,7 +90,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     if(order_beta) {
       #more efficient than this would be to stack all the C's underneath
       #betas
-      o_beta <- n_mat_sum(beta.ss[[aspect]][[1]][,words], 
+      o_beta <- n_mat_sumcpp(beta.ss[[aspect]][[1]][,words], 
                           beta.ss[[aspect]][[2]][,words], 
                           doc.results$phis)
       beta.ss[[aspect]][[1]][,words] <- o_beta[[1]]
