@@ -30,6 +30,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
   # 1) Initialize Sufficient Statistics 
   if(order_sigma) {
     sigma.ss <- list(sum = diag(0, nrow=(K-1)), c = diag(0, nrow=(K-1)))
+    tsigma <- diag(0, nrow=(K-1))
     #sigma.ss <- n_mat_sum(diag(0, nrow=(K-1)))
   } else {
     sigma.ss <- diag(0, nrow=(K-1))
@@ -40,6 +41,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       beta.ss[[i]] <- list(sum = matrix(0, nrow=K,ncol=V), c = matrix(0, nrow=K,ncol=V))
       #beta.ss[[i]] <- n_mat_sum(matrix(0, nrow=K,ncol=V))
     }
+    tbeta <- matrix(0, nrow=K, ncol=V)
   } else {
     beta.ss <- vector(mode="list", length=A)
     for(i in 1:A) {
@@ -82,7 +84,7 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
     
     # update sufficient statistics 
     if(order_sigma) {
-      sigma.ss <- n_mat_sumcpp(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu)
+      sigma.ss <- n_mat_sumcpp(sigma.ss[[1]], sigma.ss[[2]], doc.results$eta$nu, tsigma)
     } else {
       sigma.ss <- sigma.ss + doc.results$eta$nu
       #pluseqcpp(sigma.ss, doc.results$eta$nu)
@@ -92,7 +94,8 @@ estep <- function(documents, beta.index, update.mu, #null allows for intercept o
       #betas
       o_beta <- n_mat_sumcpp(beta.ss[[aspect]][[1]][,words], 
                           beta.ss[[aspect]][[2]][,words], 
-                          doc.results$phis)
+                          doc.results$phis,
+                          tbeta)
       beta.ss[[aspect]][[1]][,words] <- o_beta[[1]]
       beta.ss[[aspect]][[2]][,words] <- o_beta[[2]]
     } else {

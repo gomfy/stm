@@ -360,7 +360,7 @@ void gradlhood(double* eta,
 
 
 // [[Rcpp::export]]
-SEXP n_mat_sumcpp(SEXP sum_, SEXP c_, SEXP input_) {
+SEXP n_mat_sumcpp(SEXP sum_, SEXP c_, SEXP input_, SEXP t_) {
    
    Rcpp::NumericMatrix sum(sum_);
    arma::mat asum(sum.begin(), sum.nrow(), sum.ncol(), false); 
@@ -371,7 +371,9 @@ SEXP n_mat_sumcpp(SEXP sum_, SEXP c_, SEXP input_) {
    Rcpp::NumericMatrix input(input_);
    arma::mat ainput(input.begin(), input.nrow(), input.ncol(), false);
  
-   arma::mat at(asum.n_rows, asum.n_cols, arma::fill::zeros);
+   Rcpp::NumericMatrix t(t_);
+   arma::mat at(t.begin(), t.nrow(), t.ncol(), false);
+//   arma::mat at(asum.n_rows, asum.n_cols, arma::fill::zeros);
    at = asum + ainput;
    
    for(arma::uword j=0; j<asum.n_cols; ++j) {
