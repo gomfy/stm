@@ -5,13 +5,15 @@ avg_time_sum <- numeric()
 num_runs <- numeric()
 sum_type <- character()
 
-ks <- c(5, 10) #c(5, 11, 20, 41, 80)
-num_run = 2
+ks <- c(5, 10, 20, 40, 80)
+num_run = 3
 
+print("Summation time trials")
 for(k in ks) {
   cum_time = 0
   for(j in 1:num_run) {
-    res <- stm(poliblog5k.docs, poliblog5k.voc, K=k, prevalence=~rating, data=poliblog5k.meta, max.em.its = 100, control=list(method="BFGS", order_sigma=TRUE, order_beta=TRUE))
+    cat(paste("k:", k, "j:", j, "\n"))
+    res <- stm(poliblog5k.docs, poliblog5k.voc, K=k, prevalence=~rating, data=poliblog5k.meta, max.em.its = 100, verbose = FALSE, control=list(method="BFGS", order_sigma=TRUE, order_beta=TRUE))
     cum_time = cum_time + res$time
   }
   num_topics <- cbind(num_topics, k)
@@ -27,5 +29,5 @@ num_sum_df <- data.frame(
   sum_type = as.character(sum_type)
 )
 
-print(num_sum_df)
-save(num_sum_df,file="num_sum.Rda")
+#print(num_sum_df)
+save(num_sum_df,file="/home/gyorgym/sociology/stm/sprint/num_sum.Rda")
