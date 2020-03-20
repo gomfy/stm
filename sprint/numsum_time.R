@@ -1,0 +1,31 @@
+library(stm)
+
+num_topics <- numeric()
+avg_time_sum <- numeric()
+num_runs <- numeric()
+sum_type <- character()
+
+ks <- c(5, 10) #c(5, 11, 20, 41, 80)
+num_run = 2
+
+for(k in ks) {
+  cum_time = 0
+  for(j in 1:num_run) {
+    res <- stm(poliblog5k.docs, poliblog5k.voc, K=k, prevalence=~rating, data=poliblog5k.meta, max.em.its = 100, control=list(method="BFGS", order_sigma=TRUE, order_beta=TRUE))
+    cum_time = cum_time + res$time
+  }
+  num_topics <- cbind(num_topics, k)
+  avg_time_sum <- cbind(avg_time_sum, cum_time/num_run)
+  num_runs <- cbind(num_runs, num_run)
+  sum_type <- cbind(sum_type, "num")
+}
+
+num_sum_df <- data.frame(
+  num_topics = as.numeric(num_topics),
+  avg_time_sum = as.numeric(avg_time_sum),
+  num_runs = as.numeric(num_runs),
+  sum_type = as.character(sum_type)
+)
+
+print(num_sum_df)
+save(num_sum_df,file="num_sum.Rda")
