@@ -12,6 +12,7 @@ print("Summation time trials")
 for(k in ks) {
   cum_time = 0
   for(j in 1:num_run) {
+    cat(paste("k:", k, "j:", j, "\n"))
     res <- stm(poliblog5k.docs, poliblog5k.voc, K=k, prevalence=~rating, data=poliblog5k.meta, max.em.its = 100, verbose = FALSE, control=list(method="BFGS"))
     cum_time = cum_time + res$time
   }
