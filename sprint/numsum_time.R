@@ -5,7 +5,7 @@ avg_time_sum <- numeric()
 num_runs <- numeric()
 sum_type <- character()
 
-ks <- c(5, 10, 20, 40, 80)
+ks <- c(5, 10, 20, 40, 80, 100, 120)
 num_run = 3
 
 print("Summation time trials")
